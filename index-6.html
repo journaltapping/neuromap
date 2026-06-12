@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NeuroMap — Decode your child's behaviour through a nervous system lens</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Nunito:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --navy: #1E2E48; --navy-light: #2C3E5C; --gold: #BDA070; --gold-light: #D4B88A;
+  --beige: #F5EDE0; --beige-dark: #EDE0CC; --white: #FFFFFF;
+  --text: #2C2C2C; --muted: #7A6A58; --border: #E0D5C5;
+}
+html { scroll-behavior: smooth; }
+body { font-family: 'Nunito', sans-serif; background: var(--beige); color: var(--text); min-height: 100vh; }
+
+/* AUTH SCREENS */
+.auth-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+  padding: 24px;
+}
+.auth-card {
+  background: var(--white);
+  border-radius: 24px;
+  padding: 48px 40px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.25);
+}
+.auth-logo {
+  text-align: center;
+  margin-bottom: 32px;
+}
+.auth-logo-name {
+  font-family: 'Playfair Display', serif;
+  color: var(--navy);
+  font-size: 2rem;
+  font-weight: 700;
+  display: block;
+}
+.auth-logo-tag {
+  color: var(--muted);
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-top: 4px;
+  display: block;
+}
+.auth-title {
+  font-family: 'Playfair Display', serif;
+  color: var(--navy);
+  font-size: 1.4rem;
+  margin-bottom: 8px;
+  text-align: center;
+}
+.auth-sub {
+  color: var(--muted);
+  font-size: 0.88rem;
+  text-align: center;
+  margin-bottom: 28px;
+  line-height: 1.6;
+}
+.auth-form { display: flex; flex-direction: column; gap: 16px; }
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-label { font-size: 0.8rem; font-weight: 700; color: var(--navy); letter-spacing: 0.04em; text-transform: uppercase; }
+.form-input {
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.95rem;
+  color: var(--text);
+  background: var(--beige);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.form-input:focus { border-color: var(--gold); }
+.auth-btn {
+  background: var(--navy);
+  color: var(--white);
+  border: none;
+  border-radius: 12px;
+  padding: 14px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 8px;
+}
+.auth-btn:hover { background: var(--navy-light); transform: translateY(-1px); }
+.auth-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+.auth-switch {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+.auth-switch a { color: var(--gold); font-weight: 700; cursor: pointer; text-decoration: none; }
+.auth-switch a:hover { text-decoration: underline; }
+.auth-error {
+  background: #FEE8E8;
+  border: 1px solid #F5A0A0;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  color: #8B2020;
+  display: none;
+}
+.auth-success {
+  background: #E8F5E8;
+  border: 1px solid #A0D0A0;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  color: #1A5C1A;
+  display: none;
+  text-align: center;
+  line-height: 1.6;
+}
+.auth-divider {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.78rem;
+  margin: 4px 0;
+}
+.gold-bar {
+  height: 4px;
+  background: linear-gradient(90deg, var(--gold), var(--gold-light));
+  border-radius: 4px 4px 0 0;
+  margin: -48px -40px 40px;
+  border-radius: 24px 24px 0 0;
+}
+
+/* MAIN APP */
+#app { display: none; }
+
+nav {
+  background: var(--navy);
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+}
+.nav-logo { font-family: 'Playfair Display', serif; color: var(--gold); font-size: 1.1rem; font-weight: 700; z-index: 101; }
+.nav-logo span { color: var(--white); font-weight: 400; }
+.nav-right { display: flex; align-items: center; gap: 12px; }
+.nav-user { color: rgba(255,255,255,0.6); font-size: 0.78rem; }
+.nav-logout {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.7);
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.nav-logout:hover { background: rgba(255,255,255,0.15); color: white; }
+.nav-tabs { display: flex; gap: 4px; }
+.nav-tab {
+  background: none; border: none; color: rgba(255,255,255,0.6);
+  font-family: 'Nunito', sans-serif; font-size: 0.82rem; font-weight: 600;
+  padding: 8px 14px; border-radius: 20px; cursor: pointer; transition: all 0.2s;
+  letter-spacing: 0.03em; text-transform: uppercase;
+}
+.nav-tab:hover { color: var(--white); background: rgba(255,255,255,0.08); }
+.nav-tab.active { background: var(--gold); color: var(--navy); }
+.hamburger {
+  display: none; flex-direction: column; gap: 5px;
+  background: none; border: none; cursor: pointer; padding: 8px; z-index: 101;
+}
+.hamburger span { display: block; width: 24px; height: 2px; background: var(--white); border-radius: 2px; transition: all 0.3s; }
+.hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.hamburger.open span:nth-child(2) { opacity: 0; }
+.hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+.mobile-menu {
+  display: none; position: fixed; top: 64px; left: 0; right: 0;
+  background: var(--navy); padding: 12px 16px 20px; flex-direction: column;
+  gap: 6px; z-index: 99; box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+.mobile-menu.open { display: flex; }
+.mobile-nav-tab {
+  background: none; border: none; color: rgba(255,255,255,0.75);
+  font-family: 'Nunito', sans-serif; font-size: 1rem; font-weight: 600;
+  padding: 13px 16px; border-radius: 12px; cursor: pointer; text-align: left; transition: all 0.2s; width: 100%;
+}
+.mobile-nav-tab:hover { background: rgba(255,255,255,0.08); color: white; }
+.mobile-nav-tab.active { background: var(--gold); color: var(--navy); }
+
+.section { display: none; }
+.section.active { display: block; }
+
+/* SHARED */
+.card { background: var(--white); border-radius: 16px; padding: 28px; box-shadow: 0 2px 16px rgba(30,46,72,0.08); border: 1px solid var(--border); }
+.container { max-width: 860px; margin: 0 auto; padding: 40px 20px; }
+.container-wide { max-width: 1100px; margin: 0 auto; padding: 40px 20px; }
+.btn-primary { background: var(--gold); color: var(--navy); border: none; font-family: 'Nunito', sans-serif; font-size: 0.95rem; font-weight: 700; padding: 14px 32px; border-radius: 32px; cursor: pointer; transition: all 0.2s; }
+.btn-primary:hover { background: var(--gold-light); transform: translateY(-1px); }
+.btn-secondary { background: transparent; color: var(--navy); border: 2px solid var(--navy); font-family: 'Nunito', sans-serif; font-size: 0.9rem; font-weight: 700; padding: 11px 24px; border-radius: 32px; cursor: pointer; transition: all 0.2s; }
+.btn-secondary:hover { background: var(--navy); color: var(--white); }
+.section-header { background: var(--white); border-bottom: 1px solid var(--border); padding: 28px 20px 0; text-align: center; }
+.section-header h2 { font-family: 'Playfair Display', serif; color: var(--navy); font-size: clamp(1.4rem, 3vw, 1.9rem); margin-bottom: 8px; }
+.section-header p { color: var(--muted); font-size: 0.9rem; max-width: 520px; margin: 0 auto 24px; line-height: 1.6; }
+.inner-tabs { display: flex; gap: 8px; margin-bottom: 28px; flex-wrap: wrap; }
+.inner-tab { background: var(--white); border: 2px solid var(--border); border-radius: 24px; padding: 8px 18px; font-family: 'Nunito', sans-serif; font-size: 0.85rem; font-weight: 700; cursor: pointer; color: var(--muted); transition: all 0.2s; }
+.inner-tab.active { background: var(--navy); border-color: var(--navy); color: white; }
+.inner-tab:hover:not(.active) { border-color: var(--gold); color: var(--navy); }
+.hidden { display: none !important; }
+.loading-dots { display: flex; gap: 6px; justify-content: center; align-items: center; padding: 24px; }
+.loading-dots span { width: 8px; height: 8px; background: var(--gold); border-radius: 50%; animation: bounce 1.2s infinite; }
+.loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+.loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes bounce { 0%,80%,100%{transform:scale(0.8);opacity:0.5} 40%{transform:scale(1.2);opacity:1} }
+
+/* QUIZ */
+.quiz-progress-bar { background: var(--border); border-radius: 8px; height: 6px; margin-bottom: 32px; overflow: hidden; }
+.quiz-progress-fill { background: linear-gradient(90deg, var(--gold), #C4822A); height: 100%; border-radius: 8px; transition: width 0.4s ease; }
+.quiz-step-label { font-size: 0.78rem; color: var(--muted); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }
+.quiz-question { font-family: 'Playfair Display', serif; font-size: clamp(1.2rem, 2.5vw, 1.5rem); color: var(--navy); line-height: 1.4; margin-bottom: 8px; }
+.quiz-sub { color: var(--muted); font-size: 0.9rem; margin-bottom: 28px; line-height: 1.6; }
+.quiz-options { display: flex; flex-direction: column; gap: 12px; }
+.quiz-option { background: var(--beige); border: 2px solid var(--border); border-radius: 12px; padding: 16px 20px; cursor: pointer; transition: all 0.2s; font-size: 0.95rem; font-family: 'Nunito', sans-serif; color: var(--text); text-align: left; display: flex; align-items: center; gap: 12px; }
+.quiz-option:hover { border-color: var(--gold); background: #FDF8F2; }
+.quiz-option.selected { border-color: var(--gold); background: #FDF8F2; box-shadow: 0 0 0 3px rgba(189,160,112,0.2); }
+.quiz-option-dot { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
+.quiz-option.selected .quiz-option-dot { background: var(--gold); border-color: var(--gold); }
+.quiz-option.selected .quiz-option-dot::after { content:''; width:8px; height:8px; background:white; border-radius:50%; }
+.quiz-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 32px; }
+.state-card-result { border-radius: 20px; padding: 36px; text-align: center; margin-bottom: 24px; }
+.state-owl { background: linear-gradient(135deg, #2D5A4E 0%, #4A7C6F 100%); color: white; }
+.state-lion { background: linear-gradient(135deg, #8B3A3A 0%, #C4822A 100%); color: white; }
+.state-hedgehog { background: linear-gradient(135deg, #1E2E48 0%, #2C3E5C 100%); color: white; }
+.state-icon { font-size: 4rem; margin-bottom: 16px; }
+.state-name { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 700; margin-bottom: 8px; }
+.state-tagline { font-size: 0.95rem; opacity: 0.85; line-height: 1.6; max-width: 480px; margin: 0 auto; }
+.score-bars { margin: 20px 0; }
+.score-bar-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.score-bar-label { font-size: 0.82rem; font-weight: 700; color: var(--navy); width: 90px; flex-shrink: 0; }
+.score-bar-track { flex: 1; height: 10px; background: var(--border); border-radius: 8px; overflow: hidden; }
+.score-bar-fill { height: 100%; border-radius: 8px; transition: width 0.8s ease; }
+.fill-owl { background: linear-gradient(90deg, #4A7C6F, #2D5A4E); }
+.fill-lion { background: linear-gradient(90deg, #C4822A, #8B3A3A); }
+.fill-hedgehog { background: linear-gradient(90deg, #2C3E5C, #1E2E48); }
+.score-bar-val { font-size: 0.82rem; color: var(--muted); width: 36px; text-align: right; }
+.result-section-title { font-family: 'Playfair Display', serif; font-size: 1.25rem; color: var(--navy); margin-bottom: 16px; padding-bottom: 10px; border-bottom: 2px solid var(--border); }
+
+/* CHAT */
+.chat-container { display: flex; flex-direction: column; height: calc(100vh - 220px); min-height: 500px; }
+.chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; background: var(--white); border-radius: 16px 16px 0 0; border: 1px solid var(--border); border-bottom: none; }
+.message { max-width: 80%; padding: 14px 18px; border-radius: 18px; font-size: 0.93rem; line-height: 1.65; }
+.message.user { background: var(--navy); color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
+.message.ai { background: var(--beige); color: var(--text); align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid var(--border); }
+.message.ai strong { color: var(--navy); }
+.message-sender { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 6px; opacity: 0.6; }
+.chat-input-area { background: var(--white); border: 1px solid var(--border); border-radius: 0 0 16px 16px; padding: 16px; display: flex; gap: 12px; align-items: flex-end; }
+.chat-input { flex: 1; border: 2px solid var(--border); border-radius: 12px; padding: 12px 16px; font-family: 'Nunito', sans-serif; font-size: 0.93rem; resize: none; min-height: 48px; max-height: 120px; outline: none; transition: border-color 0.2s; color: var(--text); background: var(--beige); }
+.chat-input:focus { border-color: var(--gold); }
+.chat-send { background: var(--navy); border: none; border-radius: 12px; width: 48px; height: 48px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; }
+.chat-send:hover { background: var(--gold); }
+.chat-send svg { width: 20px; height: 20px; fill: white; }
+.chat-prompts { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.chat-prompt-chip { background: var(--white); border: 1px solid var(--border); border-radius: 20px; padding: 7px 14px; font-size: 0.8rem; font-family: 'Nunito', sans-serif; cursor: pointer; transition: all 0.2s; color: var(--navy); font-weight: 600; }
+.chat-prompt-chip:hover { border-color: var(--gold); background: #FDF8F2; }
+.alert-info { background: #EEF4FF; border: 1px solid #C3D4F7; border-radius: 12px; padding: 14px 18px; font-size: 0.88rem; color: #2D4A8A; line-height: 1.6; margin-bottom: 20px; }
+
+/* RESOURCES */
+.resource-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+.resource-card { background: var(--white); border-radius: 16px; border: 1px solid var(--border); overflow: hidden; transition: all 0.2s; }
+.resource-card:hover { box-shadow: 0 6px 24px rgba(30,46,72,0.1); transform: translateY(-2px); }
+.resource-type-banner { padding: 10px 18px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
+.type-exercise { background: #F5EDE0; color: #5C4A2A; }
+.type-video { background: #F5EDE0; color: #5C4A2A; }
+.type-audio { background: #F5EDE0; color: #5C4A2A; }
+.resource-body { padding: 18px; }
+.resource-title { font-family: 'Playfair Display', serif; font-size: 1rem; color: var(--navy); margin-bottom: 8px; }
+.resource-desc { font-size: 0.85rem; color: var(--muted); line-height: 1.6; margin-bottom: 14px; }
+.resource-state-badge { display: inline-block; font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 12px; margin-bottom: 12px; background: #F5EDE0; color: #1E2E48; border: 1px solid var(--border); }
+.upload-zone { border: 2px dashed var(--border); border-radius: 16px; padding: 40px; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--white); }
+.upload-zone:hover { border-color: var(--gold); background: #FDF8F2; }
+.form-group { margin-bottom: 20px; }
+.form-label-sm { font-size: 0.82rem; font-weight: 700; color: var(--navy); letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 8px; display: block; }
+.form-input-sm, .form-select-sm, .form-textarea-sm { width: 100%; border: 2px solid var(--border); border-radius: 10px; padding: 11px 14px; font-family: 'Nunito', sans-serif; font-size: 0.93rem; color: var(--text); background: var(--beige); outline: none; transition: border-color 0.2s; }
+.form-input-sm:focus, .form-select-sm:focus, .form-textarea-sm:focus { border-color: var(--gold); }
+.form-textarea-sm { min-height: 80px; resize: vertical; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+/* BLOG */
+.lesson-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+.lesson-card { background: var(--white); border-radius: 16px; border: 1px solid var(--border); overflow: hidden; cursor: pointer; transition: all 0.2s; }
+.lesson-card:hover { box-shadow: 0 6px 24px rgba(30,46,72,0.1); transform: translateY(-2px); }
+.lesson-header { padding: 20px 20px 16px; border-bottom: 1px solid var(--border); }
+.lesson-number { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; }
+.lesson-title { font-family: 'Playfair Display', serif; font-size: 1.05rem; color: var(--navy); line-height: 1.4; }
+.lesson-body { padding: 16px 20px; }
+.lesson-desc { font-size: 0.85rem; color: var(--muted); line-height: 1.65; margin-bottom: 14px; }
+.lesson-read-btn { font-size: 0.82rem; font-weight: 700; color: var(--gold); background: none; border: none; cursor: pointer; font-family: 'Nunito', sans-serif; padding: 0; }
+.lesson-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.lesson-modal { background: var(--white); border-radius: 20px; max-width: 640px; width: 100%; max-height: 85vh; overflow-y: auto; padding: 36px; position: relative; }
+.lesson-modal-close { position: absolute; top: 16px; right: 16px; background: var(--beige); border: none; border-radius: 50%; width: 36px; height: 36px; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; color: var(--navy); }
+.lesson-modal h2 { font-family: 'Playfair Display', serif; color: var(--navy); font-size: 1.4rem; margin-bottom: 20px; line-height: 1.4; }
+.lesson-modal p { font-size: 0.93rem; line-height: 1.8; color: var(--text); margin-bottom: 16px; }
+.lesson-modal h3 { font-family: 'Playfair Display', serif; color: var(--navy); font-size: 1.05rem; margin: 24px 0 10px; }
+
+/* MODAL */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.modal-box { background: var(--white); border-radius: 20px; max-width: 520px; width: 100%; max-height: 85vh; overflow-y: auto; padding: 36px; position: relative; }
+.modal-close { position: absolute; top: 16px; right: 16px; background: var(--beige); border: none; border-radius: 50%; width: 36px; height: 36px; cursor: pointer; font-size: 1.1rem; color: var(--navy); }
+
+@media (max-width: 700px) {
+  .nav-tabs { display: none; }
+  .hamburger { display: flex; }
+  .grid-2 { grid-template-columns: 1fr; }
+  .message { max-width: 92%; }
+  .lesson-modal { padding: 24px; }
+  .auth-card { padding: 36px 24px; }
+  .gold-bar { margin: -36px -24px 32px; }
+  .container, .container-wide { padding: 24px 14px; }
+}
+</style>
+</head>
+<body>
+
+<!-- AUTH SCREENS -->
+<div id="auth-screen">
+
+  <!-- LOGIN -->
+  <div id="login-screen" class="auth-screen">
+    <div class="auth-card">
+      <div class="gold-bar"></div>
+      <div class="auth-logo">
+        <span class="auth-logo-name">NeuroMap</span>
+        <span class="auth-logo-tag">by Journal Tapping Method</span>
+      </div>
+      <h2 class="auth-title">Welcome back</h2>
+      <p class="auth-sub">Sign in to access Willow and your nervous system toolkit</p>
+      <div class="auth-error" id="login-error"></div>
+      <div class="auth-form">
+        <div class="form-group">
+          <label class="form-label">Email address</label>
+          <input class="form-input" type="email" id="login-email" placeholder="your@email.com" autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input class="form-input" type="password" id="login-password" placeholder="Your password" autocomplete="current-password">
+        </div>
+        <button class="auth-btn" id="login-btn" onclick="handleLogin()">Sign In</button>
+        <div class="auth-divider">
+          <a href="#" onclick="showForgot()" style="color:var(--gold);font-size:0.85rem;font-weight:700;">Forgot your password?</a>
+        </div>
+      </div>
+      <div class="auth-switch">Don't have an account? <a onclick="showSignup()">Create one free</a></div>
+    </div>
+  </div>
+
+  <!-- SIGNUP -->
+  <div id="signup-screen" class="auth-screen" style="display:none;">
+    <div class="auth-card">
+      <div class="gold-bar"></div>
+      <div class="auth-logo">
+        <span class="auth-logo-name">NeuroMap</span>
+        <span class="auth-logo-tag">by Journal Tapping Method</span>
+      </div>
+      <h2 class="auth-title">Create your account</h2>
+      <p class="auth-sub">Join NeuroMap and start understanding your child's nervous system today</p>
+      <div class="auth-error" id="signup-error"></div>
+      <div class="auth-success" id="signup-success"></div>
+      <div class="auth-form" id="signup-form">
+        <div class="form-group">
+          <label class="form-label">Your name</label>
+          <input class="form-input" type="text" id="signup-name" placeholder="First name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email address</label>
+          <input class="form-input" type="email" id="signup-email" placeholder="your@email.com" autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input class="form-input" type="password" id="signup-password" placeholder="At least 8 characters" autocomplete="new-password">
+        </div>
+        <button class="auth-btn" id="signup-btn" onclick="handleSignup()">Create Account</button>
+      </div>
+      <div class="auth-switch">Already have an account? <a onclick="showLogin()">Sign in</a></div>
+    </div>
+  </div>
+
+  <!-- FORGOT PASSWORD -->
+  <div id="forgot-screen" class="auth-screen" style="display:none;">
+    <div class="auth-card">
+      <div class="gold-bar"></div>
+      <div class="auth-logo">
+        <span class="auth-logo-name">NeuroMap</span>
+        <span class="auth-logo-tag">by Journal Tapping Method</span>
+      </div>
+      <h2 class="auth-title">Reset your password</h2>
+      <p class="auth-sub">Enter your email and we'll send you a reset link</p>
+      <div class="auth-error" id="forgot-error"></div>
+      <div class="auth-success" id="forgot-success"></div>
+      <div class="auth-form">
+        <div class="form-group">
+          <label class="form-label">Email address</label>
+          <input class="form-input" type="email" id="forgot-email" placeholder="your@email.com">
+        </div>
+        <button class="auth-btn" id="forgot-btn" onclick="handleForgot()">Send Reset Link</button>
+      </div>
+      <div class="auth-switch"><a onclick="showLogin()">← Back to sign in</a></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+<nav>
+  <div class="nav-logo">NeuroMap <span>by JTM</span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showSection('quiz',this)">🧭 Quiz</button>
+    <button class="nav-tab" onclick="showSection('chat',this)">💬 Chat</button>
+    <button class="nav-tab" onclick="showSection('resources',this)">📚 Resources</button>
+    <button class="nav-tab" onclick="showSection('blog',this)">📝 Blog</button>
+  </div>
+  <div class="nav-right">
+    <span class="nav-user" id="nav-user-email"></span>
+    <button class="nav-logout" onclick="handleLogout()">Sign out</button>
+    <button class="hamburger" id="hamburger" onclick="toggleMenu()">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+<div class="mobile-menu" id="mobile-menu">
+  <button class="mobile-nav-tab active" onclick="showSection('quiz',this,true)">🧭 Quiz</button>
+  <button class="mobile-nav-tab" onclick="showSection('chat',this,true)">💬 Chat</button>
+  <button class="mobile-nav-tab" onclick="showSection('resources',this,true)">📚 Resources</button>
+  <button class="mobile-nav-tab" onclick="showSection('blog',this,true)">📝 Blog</button>
+</div>
+
+<!-- QUIZ -->
+<div id="section-quiz" class="section active">
+  <div style="background:linear-gradient(135deg,var(--navy) 0%,var(--navy-light) 100%);padding:40px 20px 32px;text-align:center;">
+    <div style="display:inline-block;background:rgba(189,160,112,0.2);border:1px solid rgba(189,160,112,0.4);color:var(--gold);font-size:0.72rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:5px 14px;border-radius:20px;margin-bottom:20px;">NeuroMap Assessment</div>
+    <h1 style="font-family:'Playfair Display',serif;color:white;font-size:clamp(1.6rem,3.5vw,2.4rem);margin-bottom:12px;">Where is your child's <span style="color:var(--gold);">nervous system</span> right now?</h1>
+    <p style="color:rgba(255,255,255,0.75);max-width:500px;margin:0 auto;line-height:1.7;font-size:0.95rem;">Answer a few questions about the behaviours and symptoms you're seeing. NeuroMap will decode your child's nervous system state and build a personalised regulation plan — powered by Willow, your AI nervous system coach.</p>
+  </div>
+  <div class="container">
+    <div id="quiz-start" class="card">
+      <div style="text-align:center;padding:12px 0;">
+        <div style="font-size:3rem;margin-bottom:16px;">🦉🦁🦔</div>
+        <h2 style="font-family:'Playfair Display',serif;color:var(--navy);font-size:1.4rem;margin-bottom:12px;">Three nervous system states</h2>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin:24px 0;">
+          <div style="background:#F5EDE0;border:2px solid #BDA070;border-radius:12px;padding:18px;text-align:center;">
+            <div style="font-size:2rem;margin-bottom:8px;">🦉</div>
+            <div style="font-weight:700;color:#1E2E48;margin-bottom:6px;">Owl</div>
+            <div style="font-size:0.82rem;color:#5C4A2A;line-height:1.5;">Regulated & connected. Calm, curious, able to learn and connect.</div>
+          </div>
+          <div style="background:#F5EDE0;border:2px solid #BDA070;border-radius:12px;padding:18px;text-align:center;">
+            <div style="font-size:2rem;margin-bottom:8px;">🦁</div>
+            <div style="font-weight:700;color:#1E2E48;margin-bottom:6px;">Lion Cub</div>
+            <div style="font-size:0.82rem;color:#5C4A2A;line-height:1.5;">Activated & protective. Fight, flight or alert freeze — nervous system in overdrive.</div>
+          </div>
+          <div style="background:#F5EDE0;border:2px solid #BDA070;border-radius:12px;padding:18px;text-align:center;">
+            <div style="font-size:2rem;margin-bottom:8px;">🦔</div>
+            <div style="font-weight:700;color:#1E2E48;margin-bottom:6px;">Hedgehog</div>
+            <div style="font-size:0.82rem;color:#5C4A2A;line-height:1.5;">Collapsed & shutdown. Withdrawn, shut down, disconnected from the world.</div>
+          </div>
+        </div>
+        <p style="color:var(--muted);font-size:0.88rem;margin-bottom:28px;line-height:1.6;">This short quiz (12 questions) will identify which state your child is spending the most time in, and why.</p>
+        <button class="btn-primary" onclick="startQuiz()">Start the Assessment →</button>
+      </div>
+    </div>
+    <div id="quiz-questions" class="card hidden">
+      <div class="quiz-progress-bar"><div class="quiz-progress-fill" id="quiz-progress"></div></div>
+      <div class="quiz-step-label" id="quiz-step-label">Question 1 of 12</div>
+      <div class="quiz-question" id="quiz-question-text"></div>
+      <div class="quiz-sub" id="quiz-question-sub"></div>
+      <div class="quiz-options" id="quiz-options"></div>
+      <div class="quiz-nav">
+        <button class="btn-secondary" id="quiz-back-btn" onclick="quizBack()" style="visibility:hidden;">← Back</button>
+        <button class="btn-primary" id="quiz-next-btn" onclick="quizNext()" disabled>Next →</button>
+      </div>
+    </div>
+    <div id="quiz-loading" class="card hidden" style="text-align:center;padding:48px;">
+      <div style="font-size:2rem;margin-bottom:16px;">🧠</div>
+      <h3 style="font-family:'Playfair Display',serif;color:var(--navy);margin-bottom:8px;">Mapping your child's nervous system…</h3>
+      <p style="color:var(--muted);font-size:0.88rem;margin-bottom:20px;">Willow is analysing your answers and preparing a personalised plan.</p>
+      <div class="loading-dots"><span></span><span></span><span></span></div>
+    </div>
+    <div id="quiz-results" class="hidden"></div>
+  </div>
+</div>
+
+<!-- CHAT -->
+<div id="section-chat" class="section">
+  <div class="section-header">
+    <h2>Willow Chat</h2>
+    <p>Describe exactly what you're seeing in your child. Willow will explain the nervous system connection and give you practical guidance.</p>
+  </div>
+  <div class="container">
+    <div class="alert-info">💡 <strong>Tip:</strong> Be as specific as possible — "My 10-year-old has meltdowns every morning before school, refuses to get dressed, and says her stomach hurts" gets much better answers than "my child is anxious."</div>
+    <p style="font-size:0.8rem;color:var(--muted);margin-bottom:10px;">Quick prompts to get started:</p>
+    <div class="chat-prompts">
+      <button class="chat-prompt-chip" onclick="usePrompt('My child has meltdowns and explosive anger. What\'s happening in their nervous system?')">Meltdowns & anger</button>
+      <button class="chat-prompt-chip" onclick="usePrompt('My child refuses to go to school and says they feel sick every morning.')">School refusal</button>
+      <button class="chat-prompt-chip" onclick="usePrompt('My child is withdrawn, won\'t talk, and just goes to their room. They seem shut down.')">Withdrawal & shutdown</button>
+      <button class="chat-prompt-chip" onclick="usePrompt('My child can\'t sleep and wakes up anxious with nightmares.')">Sleep & anxiety</button>
+      <button class="chat-prompt-chip" onclick="usePrompt('My child is clingy, won\'t let me leave, and panics when I\'m not there.')">Clinginess & separation</button>
+    </div>
+    <div class="chat-container">
+      <div class="chat-messages" id="chat-messages">
+        <div class="message ai">
+          <div class="message-sender">Willow</div>
+          Hello! I'm Willow, your NeuroMap AI coach. I'm here to help you decode what's happening in your child's nervous system. Tell me about the behaviours or feelings you're seeing — describe it just as you'd tell a trusted friend. 💛
+        </div>
+      </div>
+      <div class="chat-input-area">
+        <textarea class="chat-input" id="chat-input" placeholder="Describe what you're seeing in your child…" rows="1" onkeydown="handleChatKey(event)" oninput="autoResize(this)"></textarea>
+        <button class="chat-send" onclick="sendChat()">
+          <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RESOURCES -->
+<div id="section-resources" class="section">
+  <div class="section-header">
+    <h2>Resource Library</h2>
+    <p>Exercises, videos, and audios to help regulate your child's nervous system.</p>
+  </div>
+  <div class="container-wide">
+    <div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;align-items:center;justify-content:space-between;">
+      <div class="inner-tabs" style="margin-bottom:0;">
+        <button class="inner-tab active" onclick="filterResources('all',this)">All</button>
+        <button class="inner-tab" onclick="filterResources('owl',this)">🦉 Owl</button>
+        <button class="inner-tab" onclick="filterResources('lion',this)">🦁 Lion Cub</button>
+        <button class="inner-tab" onclick="filterResources('hedgehog',this)">🦔 Hedgehog</button>
+        <button class="inner-tab" onclick="filterResources('exercise',this)">Exercises</button>
+        <button class="inner-tab" onclick="filterResources('audio',this)">Audios</button>
+        <button class="inner-tab" onclick="filterResources('video',this)">Videos</button>
+      </div>
+      <button class="btn-primary" onclick="showUploadModal()" style="font-size:0.85rem;padding:10px 20px;">+ Add Resource</button>
+    </div>
+    <div class="resource-grid" id="resource-grid"></div>
+  </div>
+</div>
+
+<!-- UPLOAD MODAL -->
+<div id="upload-modal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <button class="modal-close" onclick="hideUploadModal()">✕</button>
+    <h2 style="font-family:'Playfair Display',serif;color:var(--navy);font-size:1.3rem;margin-bottom:20px;">Add a New Resource</h2>
+    <div class="form-group"><label class="form-label-sm">Resource Title</label><input class="form-input-sm" id="upload-title" placeholder="e.g. 4-8 Breathing Technique"></div>
+    <div class="form-group"><label class="form-label-sm">Description</label><textarea class="form-textarea-sm" id="upload-desc" placeholder="Brief description…"></textarea></div>
+    <div class="grid-2">
+      <div class="form-group"><label class="form-label-sm">Type</label><select class="form-select-sm" id="upload-type"><option value="exercise">Exercise</option><option value="video">Video</option><option value="audio">Audio</option></select></div>
+      <div class="form-group"><label class="form-label-sm">Nervous System State</label><select class="form-select-sm" id="upload-state"><option value="all">All States</option><option value="owl">🦉 Owl</option><option value="lion">🦁 Lion Cub</option><option value="hedgehog">🦔 Hedgehog</option></select></div>
+    </div>
+    <div class="form-group"><label class="form-label-sm">Video URL (YouTube embed)</label><input class="form-input-sm" id="upload-video" placeholder="https://youtube.com/embed/..."></div>
+    <div class="form-group"><label class="form-label-sm">Audio URL</label><input class="form-input-sm" id="upload-audio" placeholder="https://... (direct MP3 link)"></div>
+    <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:8px;">
+      <button class="btn-secondary" onclick="hideUploadModal()">Cancel</button>
+      <button class="btn-primary" onclick="addResource()">Add Resource</button>
+    </div>
+  </div>
+</div>
+
+<!-- BLOG -->
+<div id="section-blog" class="section">
+  <div class="section-header">
+    <h2>The Blog</h2>
+    <p>Warm, practical articles to help you understand your child's nervous system and behaviour — written in plain language, no jargon.</p>
+  </div>
+  <div class="container-wide">
+    <div class="inner-tabs">
+      <button class="inner-tab active" onclick="filterLessons('all',this)">All Posts</button>
+      <button class="inner-tab" onclick="filterLessons('foundations',this)">The Nervous System</button>
+      <button class="inner-tab" onclick="filterLessons('states',this)">The 3 States</button>
+      <button class="inner-tab" onclick="filterLessons('tools',this)">Tools & Techniques</button>
+      <button class="inner-tab" onclick="filterLessons('parenting',this)">Parenting & Co-Regulation</button>
+    </div>
+    <div class="lesson-grid" id="lesson-grid"></div>
+  </div>
+</div>
+
+<!-- BLOG MODAL -->
+<div id="lesson-modal" class="lesson-modal-overlay hidden">
+  <div class="lesson-modal">
+    <button class="lesson-modal-close" onclick="hideLessonModal()">✕</button>
+    <div id="lesson-modal-content"></div>
+  </div>
+</div>
+
+</div><!-- end #app -->
+
+<script>
+// ── SUPABASE ──
+const SUPABASE_URL = 'https://foogcwqrcxiuxeonlhbw.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_c8Zkifp-MU5DlOctgtW9NA_Hhtk1BqG';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ── STATE ──
+let quizAnswers = [];
+let currentQuestion = 0;
+let resources = JSON.parse(localStorage.getItem('jtm_resources') || 'null') || getDefaultResources();
+let chatHistory = [];
+let currentUser = null;
+
+// ── AUTH INIT ──
+window.addEventListener('load', async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    currentUser = session.user;
+    showApp();
+  } else {
+    showAuthScreen('login');
+  }
+  sb.auth.onAuthStateChange((event, session) => {
+    if (session) { currentUser = session.user; showApp(); }
+    else { currentUser = null; showAuthScreen('login'); }
+  });
+  renderResources('all');
+  renderLessons('all');
+});
+
+function showApp() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  if (currentUser) {
+    const email = currentUser.email || '';
+    document.getElementById('nav-user-email').textContent = email.split('@')[0];
+  }
+}
+
+function showAuthScreen(screen) {
+  document.getElementById('auth-screen').style.display = 'block';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = screen === 'login' ? 'flex' : 'none';
+  document.getElementById('signup-screen').style.display = screen === 'signup' ? 'flex' : 'none';
+  document.getElementById('forgot-screen').style.display = screen === 'forgot' ? 'flex' : 'none';
+}
+
+function showLogin() { showAuthScreen('login'); }
+function showSignup() { showAuthScreen('signup'); }
+function showForgot() { showAuthScreen('forgot'); }
+
+function showAuthError(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function hideAuthError(id) { document.getElementById(id).style.display = 'none'; }
+
+async function handleLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  hideAuthError('login-error');
+  if (!email || !password) { showAuthError('login-error', 'Please enter your email and password.'); return; }
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true; btn.textContent = 'Signing in…';
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) { showAuthError('login-error', error.message); btn.disabled = false; btn.textContent = 'Sign In'; }
+}
+
+async function handleSignup() {
+  const name = document.getElementById('signup-name').value.trim();
+  const email = document.getElementById('signup-email').value.trim();
+  const password = document.getElementById('signup-password').value;
+  hideAuthError('signup-error');
+  if (!name || !email || !password) { showAuthError('signup-error', 'Please fill in all fields.'); return; }
+  if (password.length < 8) { showAuthError('signup-error', 'Password must be at least 8 characters.'); return; }
+  const btn = document.getElementById('signup-btn');
+  btn.disabled = true; btn.textContent = 'Creating account…';
+  const { error } = await sb.auth.signUp({ email, password, options: { data: { full_name: name } } });
+  if (error) { showAuthError('signup-error', error.message); btn.disabled = false; btn.textContent = 'Create Account'; }
+  else {
+    document.getElementById('signup-form').style.display = 'none';
+    const s = document.getElementById('signup-success');
+    s.innerHTML = '✅ Account created! Please check your email to confirm your account, then come back and sign in.';
+    s.style.display = 'block';
+  }
+}
+
+async function handleForgot() {
+  const email = document.getElementById('forgot-email').value.trim();
+  hideAuthError('forgot-error');
+  if (!email) { showAuthError('forgot-error', 'Please enter your email address.'); return; }
+  const btn = document.getElementById('forgot-btn');
+  btn.disabled = true; btn.textContent = 'Sending…';
+  const { error } = await sb.auth.resetPasswordForEmail(email);
+  if (error) { showAuthError('forgot-error', error.message); btn.disabled = false; btn.textContent = 'Send Reset Link'; }
+  else {
+    const s = document.getElementById('forgot-success');
+    s.innerHTML = '✅ Reset link sent! Check your email inbox.';
+    s.style.display = 'block';
+    btn.textContent = 'Sent!';
+  }
+}
+
+async function handleLogout() {
+  await sb.auth.signOut();
+  chatHistory = [];
+  quizAnswers = [];
+  document.getElementById('chat-messages').innerHTML = `<div class="message ai"><div class="message-sender">Willow</div>Hello! I'm Willow, your NeuroMap AI coach. I'm here to help you decode what's happening in your child's nervous system. Tell me about the behaviours or feelings you're seeing. 💛</div>`;
+}
+
+// ── NAV ──
+function showSection(id, btn, isMobile) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab, .mobile-nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('section-' + id).classList.add('active');
+  const idx = ['quiz','chat','resources','blog'].indexOf(id);
+  if (idx >= 0) {
+    document.querySelectorAll('.nav-tab')[idx]?.classList.add('active');
+    document.querySelectorAll('.mobile-nav-tab')[idx]?.classList.add('active');
+  }
+  if (isMobile) toggleMenu();
+}
+
+function toggleMenu() {
+  document.getElementById('mobile-menu').classList.toggle('open');
+  document.getElementById('hamburger').classList.toggle('open');
+}
+
+// ── API CALL (via Netlify Function) ──
+async function callWillow(messages, systemPrompt, maxTokens) {
+  const resp = await fetch('/.netlify/functions/willow', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages, system: systemPrompt, max_tokens: maxTokens || 1500 })
+  });
+  const data = await resp.json();
+  if (data.content && data.content[0]) return data.content[0].text;
+  throw new Error(data.error || 'No response from Willow');
+}
+
+// ── QUIZ ──
+const questions = [
+  { q:"How does your child react when things don't go to plan?", sub:"Think about the last week — what's most typical?", options:[{text:"They get upset but can usually calm down with some support",scores:{owl:3,lion:1,hedgehog:0}},{text:"They explode — shouting, throwing things, or lashing out",scores:{owl:0,lion:3,hedgehog:0}},{text:"They go very quiet and withdraw completely",scores:{owl:0,lion:0,hedgehog:3}},{text:"They freeze and seem unable to respond at all",scores:{owl:0,lion:1,hedgehog:2}}]},
+  { q:"What does bedtime look like in your house?", sub:"Most nights recently…", options:[{text:"Mostly fine — they settle reasonably well",scores:{owl:3,lion:0,hedgehog:0}},{text:"Really hard — lots of stalling, anxiety, won't stay in bed",scores:{owl:0,lion:2,hedgehog:1}},{text:"They crash out quickly — seem exhausted all the time",scores:{owl:0,lion:0,hedgehog:3}},{text:"Wakes up in the night anxious or with nightmares",scores:{owl:0,lion:3,hedgehog:1}}]},
+  { q:"How is your child at school or in social situations?", sub:"From what teachers tell you, or what you observe…", options:[{text:"Generally positive — they engage and make friends",scores:{owl:3,lion:0,hedgehog:0}},{text:"Can be disruptive, argumentative, or impulsive",scores:{owl:0,lion:3,hedgehog:0}},{text:"Avoids social situations, hides away, seems invisible",scores:{owl:0,lion:0,hedgehog:3}},{text:"Refuses to go or says they feel sick before school",scores:{owl:0,lion:2,hedgehog:2}}]},
+  { q:"How does your child handle physical feelings like tummy aches or headaches?", options:[{text:"Rarely — they're generally well in themselves",scores:{owl:3,lion:0,hedgehog:0}},{text:"Complains of stomach aches, especially before stressful events",scores:{owl:0,lion:3,hedgehog:1}},{text:"Seems low energy, heavy, or often unwell for no clear reason",scores:{owl:0,lion:0,hedgehog:3}},{text:"Heart racing, sweating, or breathing fast when worried",scores:{owl:0,lion:2,hedgehog:0}}]},
+  { q:"What does your child's anger look like?", sub:"When they are upset or frustrated…", options:[{text:"They can express upset without it becoming a big incident",scores:{owl:3,lion:0,hedgehog:0}},{text:"Big explosions — way out of proportion to the trigger",scores:{owl:0,lion:3,hedgehog:0}},{text:"They don't really show anger — they go flat or disappear",scores:{owl:0,lion:0,hedgehog:3}},{text:"They hold it in and then it comes out suddenly hours later",scores:{owl:0,lion:1,hedgehog:2}}]},
+  { q:"How connected does your child seem to you right now?", sub:"Their emotional closeness and ability to communicate…", options:[{text:"Really connected — they talk to me and seem to trust me",scores:{owl:3,lion:0,hedgehog:0}},{text:"Push and pull — sometimes close, sometimes pushing me away",scores:{owl:0,lion:3,hedgehog:0}},{text:"Very distant — they've shut down and barely communicate",scores:{owl:0,lion:0,hedgehog:3}},{text:"Clingy and anxious — can't bear to be away from me",scores:{owl:0,lion:2,hedgehog:1}}]},
+  { q:"How does your child respond to new or unexpected situations?", options:[{text:"They can adapt — a little wobbly but they get through it",scores:{owl:3,lion:0,hedgehog:0}},{text:"Big resistance, panic, or meltdown before or during",scores:{owl:0,lion:3,hedgehog:0}},{text:"They shut down completely — become unresponsive",scores:{owl:0,lion:0,hedgehog:3}},{text:"They seem hypervigilant — scanning for what might go wrong",scores:{owl:0,lion:2,hedgehog:1}}]},
+  { q:"What are mealtimes like?", options:[{text:"Generally okay — they eat and engage in conversation",scores:{owl:3,lion:0,hedgehog:0}},{text:"A battleground — refusing foods, arguments, getting up",scores:{owl:0,lion:3,hedgehog:0}},{text:"Very quiet — they eat little and seem absent",scores:{owl:0,lion:0,hedgehog:3}},{text:"Highly variable — some days fine, others a real struggle",scores:{owl:1,lion:1,hedgehog:1}}]},
+  { q:"How does your child describe their worries when they can talk about them?", sub:"Or what themes come up in their behaviour…", options:[{text:"They worry sometimes but can put it in perspective",scores:{owl:3,lion:0,hedgehog:0}},{text:"Worry about everything — worst case scenarios, catastrophising",scores:{owl:0,lion:3,hedgehog:0}},{text:"They don't talk about it — nothing seems to matter",scores:{owl:0,lion:0,hedgehog:3}},{text:"Worry about specific things like friendships or getting things wrong",scores:{owl:0,lion:2,hedgehog:1}}]},
+  { q:"How is your child's energy during the day?", options:[{text:"Pretty consistent — good energy and enthusiasm",scores:{owl:3,lion:0,hedgehog:0}},{text:"Wired and restless — hard to settle, always on the go",scores:{owl:0,lion:3,hedgehog:0}},{text:"Very low — lack of motivation, doesn't want to do anything",scores:{owl:0,lion:0,hedgehog:3}},{text:"Crashes — bursts of energy then completely flat",scores:{owl:0,lion:1,hedgehog:2}}]},
+  { q:"When something upsets your child, how long does it take them to recover?", options:[{text:"Fairly quickly — they bounce back within minutes or hours",scores:{owl:3,lion:0,hedgehog:0}},{text:"Hours or the whole day — the upset just keeps going",scores:{owl:0,lion:2,hedgehog:1}},{text:"They don't seem to recover — they just shut down longer",scores:{owl:0,lion:0,hedgehog:3}},{text:"They explode and then seem fine, but it keeps happening",scores:{owl:0,lion:3,hedgehog:0}}]},
+  { q:"What feels most true about your child at the moment?", sub:"Go with your gut — you know your child best.", options:[{text:"They're coping — mostly okay, just the usual ups and downs",scores:{owl:3,lion:0,hedgehog:0}},{text:"They're in constant stress — everything is heightened",scores:{owl:0,lion:3,hedgehog:0}},{text:"They've disappeared into themselves — I've lost connection",scores:{owl:0,lion:0,hedgehog:3}},{text:"It's a mix — some days activated, some days flat",scores:{owl:0,lion:1,hedgehog:2}}]}
+];
+
+function startQuiz() {
+  quizAnswers = new Array(questions.length).fill(null);
+  currentQuestion = 0;
+  document.getElementById('quiz-start').classList.add('hidden');
+  document.getElementById('quiz-questions').classList.remove('hidden');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = questions[currentQuestion];
+  document.getElementById('quiz-progress').style.width = (currentQuestion / questions.length * 100) + '%';
+  document.getElementById('quiz-step-label').textContent = `Question ${currentQuestion+1} of ${questions.length}`;
+  document.getElementById('quiz-question-text').textContent = q.q;
+  document.getElementById('quiz-question-sub').textContent = q.sub || '';
+  document.getElementById('quiz-back-btn').style.visibility = currentQuestion > 0 ? 'visible' : 'hidden';
+  document.getElementById('quiz-next-btn').disabled = quizAnswers[currentQuestion] === null;
+  document.getElementById('quiz-next-btn').textContent = currentQuestion === questions.length - 1 ? 'Get My Results →' : 'Next →';
+  const opts = document.getElementById('quiz-options');
+  opts.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'quiz-option' + (quizAnswers[currentQuestion] === i ? ' selected' : '');
+    btn.innerHTML = `<div class="quiz-option-dot"></div><span>${opt.text}</span>`;
+    btn.onclick = () => { quizAnswers[currentQuestion] = i; document.querySelectorAll('.quiz-option').forEach((b,j)=>b.classList.toggle('selected',j===i)); document.getElementById('quiz-next-btn').disabled=false; };
+    opts.appendChild(btn);
+  });
+}
+
+function quizNext() { if(currentQuestion===questions.length-1){finishQuiz();}else{currentQuestion++;renderQuestion();} }
+function quizBack() { if(currentQuestion>0){currentQuestion--;renderQuestion();} }
+
+async function finishQuiz() {
+  document.getElementById('quiz-questions').classList.add('hidden');
+  document.getElementById('quiz-loading').classList.remove('hidden');
+  const scores = {owl:0,lion:0,hedgehog:0};
+  quizAnswers.forEach((ans,qi)=>{ if(ans!==null){const s=questions[qi].options[ans].scores;scores.owl+=s.owl;scores.lion+=s.lion;scores.hedgehog+=s.hedgehog;} });
+  const total = scores.owl+scores.lion+scores.hedgehog||1;
+  const pct = {owl:Math.round(scores.owl/total*100),lion:Math.round(scores.lion/total*100),hedgehog:Math.round(scores.hedgehog/total*100)};
+  const dominant = scores.owl>=scores.lion&&scores.owl>=scores.hedgehog?'owl':scores.lion>=scores.hedgehog?'lion':'hedgehog';
+  const answerSummary = quizAnswers.map((a,i)=>`Q${i+1}: ${questions[i].q} → ${a!==null?questions[i].options[a].text:'skipped'}`).join('\n');
+  const prompt = `You are a warm, non-clinical nervous system regulation coach who specialises in helping mothers understand their children's nervous system states using these three categories:
+- OWL: regulated, connected, calm, able to learn
+- LION CUB: activated/protective — fight, flight, alert freeze, hypervigilance, big anger, anxiety
+- HEDGEHOG: collapse/shutdown — withdrawn, flat, disconnected, low energy, shutdown
+
+A parent has completed a nervous system assessment. Their answers:\n${answerSummary}\n\nScores: Owl ${pct.owl}%, Lion Cub ${pct.lion}%, Hedgehog ${pct.hedgehog}%. Dominant state: ${dominant.toUpperCase()}
+
+Write a warm, personalised report. Structure it as:
+**WHAT YOU'RE SEEING** — 2-3 sentences in warm plain language
+**WHY THIS IS HAPPENING** — nervous system explanation, use "behaviour is a sign your child doesn't feel safe"
+**YOUR CHILD'S NERVOUS SYSTEM RIGHT NOW** — what life feels like from inside the child
+**YOUR REGULATION PLAN** — 5 specific things: 1) 4-counts-in/8-counts-out breathing 2) EFT tapping script 3) co-regulation strategy 4) communication approach 5) daily routine suggestion
+**A WORD FOR YOU, MUM** — 2-3 sentences of compassionate encouragement
+
+Keep language simple, warm, non-clinical, hope-filled.`;
+
+  try {
+    const text = await callWillow([{role:'user',content:prompt}], '', 1500);
+    renderResults(dominant, pct, text);
+  } catch(e) {
+    renderResults(dominant, pct, getDefaultResults(dominant));
+  }
+}
+
+function renderResults(dominant, pct, aiText) {
+  document.getElementById('quiz-loading').classList.add('hidden');
+  const el = document.getElementById('quiz-results');
+  el.classList.remove('hidden');
+  const stateInfo = {
+    owl:{icon:'🦉',name:'The Owl',cls:'state-owl',tagline:"Your child's nervous system is showing signs of good regulation. They have a strong foundation — let's build on it."},
+    lion:{icon:'🦁',name:'The Lion Cub',cls:'state-lion',tagline:"Your child's nervous system is in a protective, activated state. This is their body trying to keep them safe — not bad behaviour."},
+    hedgehog:{icon:'🦔',name:'The Hedgehog',cls:'state-hedgehog',tagline:"Your child's nervous system has moved into shutdown to protect them. This is not laziness — it's survival."}
+  };
+  const si = stateInfo[dominant];
+  const formatted = aiText.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n\n/g,'<br><br>').replace(/\n(\d+\))/g,'<br>$1');
+  el.innerHTML = `
+    <div class="state-card-result ${si.cls}"><div class="state-icon">${si.icon}</div><div class="state-name">${si.name}</div><div class="state-tagline">${si.tagline}</div></div>
+    <div class="card" style="margin-bottom:20px;">
+      <div class="result-section-title">Nervous System State Breakdown</div>
+      <div class="score-bars">
+        <div class="score-bar-row"><div class="score-bar-label">🦉 Owl</div><div class="score-bar-track"><div class="score-bar-fill fill-owl" style="width:${pct.owl}%"></div></div><div class="score-bar-val">${pct.owl}%</div></div>
+        <div class="score-bar-row"><div class="score-bar-label">🦁 Lion Cub</div><div class="score-bar-track"><div class="score-bar-fill fill-lion" style="width:${pct.lion}%"></div></div><div class="score-bar-val">${pct.lion}%</div></div>
+        <div class="score-bar-row"><div class="score-bar-label">🦔 Hedgehog</div><div class="score-bar-track"><div class="score-bar-fill fill-hedgehog" style="width:${pct.hedgehog}%"></div></div><div class="score-bar-val">${pct.hedgehog}%</div></div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:20px;"><div style="font-size:0.93rem;line-height:1.8;color:var(--text);">${formatted}</div></div>
+    <div style="text-align:center;margin-bottom:40px;">
+      <button class="btn-secondary" onclick="retakeQuiz()" style="margin-right:12px;">Retake Quiz</button>
+      <button class="btn-primary" onclick="showSection('chat',null)">Chat with Willow →</button>
+    </div>`;
+}
+
+function retakeQuiz() { document.getElementById('quiz-results').classList.add('hidden'); document.getElementById('quiz-start').classList.remove('hidden'); }
+
+function getDefaultResults(dominant) {
+  return dominant==='owl'?`**WHAT YOU'RE SEEING**\nYour child is showing signs of a well-regulated nervous system.\n\n**WHY THIS IS HAPPENING**\nBehaviour is a sign your child feels safe. Their nervous system is in the social engagement zone.\n\n**YOUR CHILD'S NERVOUS SYSTEM RIGHT NOW**\nYour child feels relatively safe in their world and trusts that upsets will pass.\n\n**YOUR REGULATION PLAN**\n1) Daily 4-in/8-out breathing together\n2) EFT: "Even though I feel a bit worried sometimes, I am safe and loved"\n3) 20 minutes of child-led connection daily\n4) Open questions at bedtime to keep communication flowing\n5) Consistent sleep and mealtimes\n\n**A WORD FOR YOU, MUM**\nYou are doing something right. A regulated child usually has a regulated parent behind them.`:
+  dominant==='lion'?`**WHAT YOU'RE SEEING**\nYour child is showing the classic signs of a nervous system stuck in protection mode.\n\n**WHY THIS IS HAPPENING**\nBehaviour is a sign your child doesn't feel safe. Their brain has detected threat and flooded their body with stress hormones. They are not choosing to behave this way.\n\n**YOUR CHILD'S NERVOUS SYSTEM RIGHT NOW**\nInside, your child is in a constant state of high alert, scanning for danger at all times.\n\n**YOUR REGULATION PLAN**\n1) 4-counts-in through the nose / 8-counts-out through the mouth — together, daily\n2) EFT: "Even though I feel really big right now, my body is safe" — tap through the points together\n3) Your calm body is medicine — get low, get quiet, don't match their energy\n4) After the storm, not during — wait for calm before connecting\n5) Predictable routine every day — same morning, same bedtime\n\n**A WORD FOR YOU, MUM**\nThis is not your fault. A dysregulated child is a child in pain. You are the most powerful regulation tool your child has.`:
+  `**WHAT YOU'RE SEEING**\nYour child has gone quiet — withdrawn, flat, disconnected.\n\n**WHY THIS IS HAPPENING**\nBehaviour is a sign your child doesn't feel safe. When fight-or-flight feels impossible, the nervous system shuts down to protect them.\n\n**YOUR CHILD'S NERVOUS SYSTEM RIGHT NOW**\nInside, your child feels numb, heavy, and disconnected. They may not be able to name what they feel.\n\n**YOUR REGULATION PLAN**\n1) Gentle 4-in/8-out breathing with soft music — no pressure, just invite\n2) EFT: "Even though I feel nothing and I've gone very quiet, I am still here and I am safe"\n3) Presence without pressure — sit near them, don't try to fix or talk\n4) "I'm here. You don't have to say anything. I'm not going anywhere."\n5) Gentle movement — a slow walk together to bring the nervous system back online\n\n**A WORD FOR YOU, MUM**\nYour steady, quiet presence is already working, even when it doesn't feel like it.`;
+}
+
+// ── CHAT ──
+const SYSTEM_PROMPT = `You are Willow, a warm, deeply knowledgeable nervous system regulation coach created by the Journal Tapping Method. You help mothers understand their children's nervous system, emotions, and behaviour — and know exactly what to do in every situation.
+
+CORE BELIEF: "Behaviour is a sign your child doesn't feel safe." Every behaviour, symptom, and emotion is a nervous system communication, not a character flaw.
+
+THREE STATES:
+🦉 OWL — Regulated/Safe: calm, curious, connected, able to learn. Physical: relaxed muscles, steady breathing, good appetite. Emotional: curiosity, joy, empathy. Behavioural: engages, responds to reason, communicates openly.
+
+🦁 LION CUB — Activated/Fight-Flight-Freeze: Physical: racing heart, stomach aches, nausea, headaches, muscle tension, sweating, shallow breathing. Emotional: fear, panic, rage, overwhelm, shame, catastrophising. Behavioural: meltdowns, explosive anger, defiance, school refusal, clinginess, sleep refusal, impulsivity, reassurance-seeking.
+
+🦔 HEDGEHOG — Shutdown/Collapse: Physical: heavy limbs, fatigue, glazed eyes, very quiet voice, poor appetite, feeling cold, dissociation. Emotional: numbness, emptiness, hopelessness, deep shame, disconnection, "I don't care". Behavioural: withdrawal, monosyllabic responses, dropping out of activities, seeming unreachable, losing interest in things they loved.
+
+ADULT vs CHILD: Children CANNOT self-regulate — their prefrontal cortex doesn't mature until age 25. They need CO-REGULATION from a calm adult. You cannot reason with a dysregulated child — the thinking brain is offline.
+
+CO-REGULATION FOR LION CUB: Get lower than child, soften face, slow breathing (4 in/8 out), quiet voice, minimal words: "I'm here. You're safe." Don't reason, don't give consequences, don't say "calm down." After the storm: warmth then gentle connection.
+
+UP-REGULATION FOR HEDGEHOG: Presence without pressure, warmth without demands, gentle rhythm/movement, warm drink/bath, very gentle 4-8 breathing offered softly.
+
+BREATHING: Always 4 counts in through nose / 8 counts out through mouth.
+EFT TAPPING POINTS: Karate chop → top of head → eyebrow → side of eye → under eye → under nose → chin → collarbone → under arm.
+
+RESPONSE FORMAT:
+**What I'm hearing** — which state this sounds like
+**What's happening inside your child** — nervous system explanation simply
+**What your child might be feeling** — internal experience
+**What to do right now** — specific immediate steps
+**What to say** — exact words/phrases
+**Exercises to try** — always include 4-8 breathing + EFT tapping script + 1-2 other exercises
+**A word for you** — one sentence of compassion
+
+Always warm, simple, mum-to-mum. Never clinical. Never judgmental. Bold headings with **heading**.`;
+
+function usePrompt(text) { document.getElementById('chat-input').value = text; autoResize(document.getElementById('chat-input')); }
+function handleChatKey(e) { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();} }
+function autoResize(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,120)+'px'; }
+
+function addMessage(role, text) {
+  const msgs = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'message ' + role;
+  const formatted = text.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+  div.innerHTML = `<div class="message-sender">${role==='user'?'You':'Willow'}</div>${formatted}`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
+
+async function sendChat() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = ''; input.style.height = 'auto';
+  addMessage('user', text);
+  chatHistory.push({role:'user', content:text});
+  const typingDiv = addMessage('ai', '<div class="loading-dots"><span></span><span></span><span></span></div>');
+  try {
+    const reply = await callWillow(chatHistory, SYSTEM_PROMPT, 1500);
+    chatHistory.push({role:'assistant', content:reply});
+    const formatted = reply.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+    typingDiv.innerHTML = `<div class="message-sender">Willow</div>${formatted}`;
+  } catch(e) {
+    typingDiv.innerHTML = `<div class="message-sender">Willow</div>I'm sorry, something went wrong. Please try again in a moment.`;
+  }
+  document.getElementById('chat-messages').scrollTop = 99999;
+}
+
+// ── RESOURCES ──
+function getDefaultResources() {
+  return [
+    {id:1,title:'4-8 Breathing Technique',desc:'The cornerstone breathing technique: 4 counts in through the nose, 8 counts out through the mouth. Activates the vagus nerve and turns on the parasympathetic brake.',type:'exercise',state:'lion',video:'',audio:''},
+    {id:2,title:'EFT Tapping Points Guide',desc:'A full walkthrough of the 9 main EFT tapping points with instructions for children and teenagers.',type:'exercise',state:'all',video:'',audio:''},
+    {id:3,title:'Butterfly Hug for Big Feelings',desc:'Cross arms over chest and tap alternately — bilateral stimulation that calms the amygdala. Great for Lion Cub moments.',type:'exercise',state:'lion',video:'',audio:''},
+    {id:4,title:'Coming Back Online — Gentle Movement',desc:'For Hedgehog/shutdown states: a sequence of gentle movements to bring the nervous system back online.',type:'exercise',state:'hedgehog',video:'',audio:''},
+    {id:5,title:'Co-Regulation at Home',desc:'How to use your own regulated nervous system to help your child come back to safety.',type:'exercise',state:'all',video:'',audio:''},
+    {id:6,title:'Morning Calm Routine Audio',desc:'A short guided breathing and tapping audio to start the day regulated — ideal for morning anxiety.',type:'audio',state:'lion',video:'',audio:''},
+    {id:7,title:'Bedtime Regulation Audio',desc:'A calming bedtime audio using gentle breathwork and tapping to help children settle before sleep.',type:'audio',state:'hedgehog',video:'',audio:''}
+  ];
+}
+
+function renderResources(filter) {
+  const grid = document.getElementById('resource-grid');
+  const filtered = resources.filter(r => filter==='all'?true:['exercise','video','audio'].includes(filter)?r.type===filter:r.state===filter||r.state==='all');
+  if (!filtered.length) { grid.innerHTML='<div style="color:var(--muted);font-size:0.9rem;padding:20px;">No resources found.</div>'; return; }
+  const typeBanners = {exercise:['type-exercise','✏️ Exercise'],video:['type-video','🎬 Video'],audio:['type-audio','🎧 Audio']};
+  const stateLabels = {owl:'🦉 Owl',lion:'🦁 Lion Cub',hedgehog:'🦔 Hedgehog',all:'🌿 All States'};
+  grid.innerHTML = filtered.map(r => {
+    const [tc,tl] = typeBanners[r.type]||['type-exercise','✏️ Exercise'];
+    const video = r.video?`<div style="margin-top:12px;border-radius:10px;overflow:hidden;"><iframe width="100%" height="160" src="${r.video}" frameborder="0" allowfullscreen style="display:block;"></iframe></div>`:'';
+    const audio = r.audio?`<audio controls style="width:100%;margin-top:12px;" src="${r.audio}"></audio>`:'';
+    return `<div class="resource-card"><div class="resource-type-banner ${tc}">${tl}</div><div class="resource-body"><span class="resource-state-badge">${stateLabels[r.state]||'🌿 All States'}</span><div class="resource-title">${r.title}</div><div class="resource-desc">${r.desc}</div>${video}${audio}</div></div>`;
+  }).join('');
+}
+
+function filterResources(filter, btn) {
+  document.querySelectorAll('#section-resources .inner-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  renderResources(filter);
+}
+
+function showUploadModal() { document.getElementById('upload-modal').classList.remove('hidden'); }
+function hideUploadModal() { document.getElementById('upload-modal').classList.add('hidden'); }
+
+function addResource() {
+  const title = document.getElementById('upload-title').value.trim();
+  if (!title) { alert('Please enter a title.'); return; }
+  resources.unshift({id:Date.now(),title,desc:document.getElementById('upload-desc').value.trim(),type:document.getElementById('upload-type').value,state:document.getElementById('upload-state').value,video:document.getElementById('upload-video').value.trim(),audio:document.getElementById('upload-audio').value.trim()});
+  localStorage.setItem('jtm_resources', JSON.stringify(resources));
+  hideUploadModal();
+  ['upload-title','upload-desc','upload-video','upload-audio'].forEach(id=>document.getElementById(id).value='');
+  renderResources('all');
+}
+
+// ── BLOG ──
+const lessons = [
+  {id:1,category:'foundations',number:'Blog Post 01',title:"Why Your Child's Behaviour Is Always Trying to Tell You Something",desc:"The single most important shift in how you see your child's behaviour — and why it changes everything.",content:`<h2>Why Your Child's Behaviour Is Always Trying to Tell You Something</h2><p>If there's one thing I want every parent to hear, it's this: <strong>your child's behaviour is not the problem. It's the message.</strong></p><p>I know how hard that can be to hold onto when you're in the middle of the third meltdown of the morning, or when your child has just told you they hate you, or when you're sitting outside their locked bedroom door wondering where your child went.</p><p>In those moments, behaviour feels very much like the problem. But behaviour is always, without exception, a communication. And that communication is almost always the same message: <em>I don't feel safe right now.</em></p><h3>What "safe" actually means</h3><p>Not safe in the dramatic sense. But safe in a nervous system sense. Deep in your child's brain, below conscious thought, there is a system constantly scanning the environment asking: <em>Am I safe right now?</em></p><p>When the answer is yes — the child can relax. They can be curious, playful, connected. We call this the <strong>Owl state</strong>.</p><p>When the answer is no — the body shifts into survival mode. Survival mode only cares about one thing: protect the child. It does not care about learning, empathy, or behaviour. Only survival.</p><h3>The two survival gears</h3><p>The first is <strong>activation</strong> — fight, flight, or alert freeze. This is the <strong>Lion Cub</strong> state. Stress hormones flood the body. This looks like meltdowns, explosive anger, defiance, anxiety, school refusal.</p><p>The second is <strong>shutdown</strong> — collapse. This is the <strong>Hedgehog</strong> state. When the threat feels too big, the oldest part of the nervous system takes over. This looks like withdrawal, flatness, disconnection.</p><h3>Why this changes everything</h3><p>When you understand that behaviour is a nervous system communication, the question changes. Instead of "why is my child doing this?" we ask: <em>"What does my child's nervous system need to feel safe right now?"</em></p><p>That is a question we can actually answer. You are not failing. Your child is not broken. Their nervous system is communicating — and now you have a way to listen.</p>`},
+  {id:2,category:'foundations',number:'Blog Post 02',title:"How the Nervous System Works — A Plain-English Guide for Parents",desc:"No jargon, no biology degree needed. Just what you actually need to know to understand your child.",content:`<h2>How the Nervous System Works — A Plain-English Guide for Parents</h2><p>You don't need a biology degree for this. Here's what actually matters.</p><p>Your child has an <strong>autonomic nervous system</strong> — it runs automatically, beneath conscious awareness, 24 hours a day. Its only job: keep your child alive. It does this by constantly scanning for threat through a process called <strong>neuroception</strong> — and it works through the body, not the thinking brain. This is why you can't reason a child out of a meltdown.</p><h3>The accelerator and the brake</h3><p>The <strong>sympathetic nervous system</strong> is the accelerator. When it detects threat, it floods the body with adrenaline and cortisol. Heart races. Breathing becomes fast. Muscles tense. This is your <strong>Lion Cub</strong>.</p><p>The <strong>parasympathetic nervous system</strong> is the brake. When the threat has passed, it brings everything back down. This is your <strong>Owl</strong>.</p><p>When the threat feels completely inescapable, the oldest part of the nervous system activates an emergency shutdown. This is your <strong>Hedgehog</strong>: flat, disconnected, still.</p><h3>Why children get stuck</h3><p>Children's nervous systems are immature. The prefrontal cortex — responsible for regulation — doesn't fully develop until around age 25. Children cannot regulate themselves. They need a calm, regulated adult to borrow regulation from. This is called <strong>co-regulation</strong>, and it is the single most important thing you can offer your child.</p><p>When you are calm, your child has the biological raw material to become calmer. You are the regulation tool. Everything else is secondary.</p>`},
+  {id:3,category:'states',number:'Blog Post 03',title:"Understanding the Owl — What a Regulated Child Actually Looks Like",desc:"What regulation really means, what it looks like in everyday life, and how to grow more of it.",content:`<h2>Understanding the Owl — What a Regulated Child Actually Looks Like</h2><p>Regulation is not the absence of emotion. It is the <strong>capacity to feel emotions without being overwhelmed by them</strong>. The ability to wobble without falling. This is the Owl state.</p><h3>What the Owl looks like in real life</h3><p>A child in their Owl has warmth and openness. Soft eyes. Relaxed body. They can make eye contact, handle a "no", manage disappointment, feel sad and then move on. They can sit in a classroom and learn. When something knocks them off balance, they come back.</p><h3>The Owl is built, not born</h3><p>Regulation is a skill, learned through <strong>co-regulation</strong> — thousands of experiences of being alongside a calm, safe adult. Your regulated nervous system acts like a tuning fork. When you stay calm, your child's nervous system gradually learns to tune to yours.</p><h3>What grows the Owl</h3><p><strong>Predictable routines</strong> signal safety. <strong>Daily 4-8 breathing</strong> trains the parasympathetic response. <strong>EFT tapping</strong> done regularly reduces baseline reactivity. <strong>Connection rituals</strong> — 10-20 minutes of uninterrupted child-led play daily — fill what I call the child's safety tank. And your own regulation practice. When you breathe and tap, you become more available to your child.</p>`},
+  {id:4,category:'states',number:'Blog Post 04',title:"Understanding the Lion Cub — When Your Child's Nervous System Is in Overdrive",desc:"Why activated behaviour looks like naughtiness but is actually a nervous system in protection mode.",content:`<h2>Understanding the Lion Cub — When Your Child's Nervous System Is in Overdrive</h2><p><strong>Your child is not a difficult child. They have a dysregulated nervous system.</strong> Those are very different things.</p><h3>What is actually happening</h3><p>When a child is in Lion Cub state, their sympathetic nervous system has fired. Stress hormones flood the body. Heart rate increases. Breathing becomes fast. The prefrontal cortex — the thinking, empathetic part of the brain — goes largely offline. Your child is not making choices. Their body has taken over.</p><h3>The threat doesn't have to be real</h3><p>The nervous system doesn't distinguish between a real threat and a perceived one. Getting a question wrong in class, being left out by a friend — these can register with the same urgency as genuine physical danger. Children with anxiety or early stress often have highly sensitised alarm systems.</p><h3>What Lion Cub looks like</h3><p><strong>Physical:</strong> racing heart, stomach aches, nausea, headaches, muscle tension, restlessness.<br><strong>Emotional:</strong> fear, panic, rage, shame, catastrophising.<br><strong>Behavioural:</strong> meltdowns, defiance, school refusal, clinginess, sleep refusal, impulsivity.</p><h3>What to do</h3><p>In the peak of activation, <strong>no intervention works except co-regulation</strong>. Get lower than your child. Soften your face. Slow your breathing. Minimal words: "I'm here. You're safe. I've got you." After the storm — warmth, connection, then gentle reflection.</p>`},
+  {id:5,category:'states',number:'Blog Post 05',title:"Understanding the Hedgehog — What Shutdown Really Means",desc:"The most misunderstood nervous system state — and why your child isn't sulking, lazy, or not caring.",content:`<h2>Understanding the Hedgehog — What Shutdown Really Means</h2><p>The Hedgehog is the hardest state to recognise — and the easiest to misread. It looks like sulking. Like laziness. Like a teenager being a teenager. And so we often react with frustration, when what the child actually needs is the opposite.</p><h3>What shutdown actually is</h3><p>When fight-or-flight has been activated too long, or the threat felt inescapable, the oldest part of the nervous system takes over and the body shuts down. It is not a choice. It is biology.</p><h3>What Hedgehog looks like</h3><p><strong>Physical:</strong> heavy limbs, fatigue, glazed eyes, very quiet voice, poor appetite, feeling cold, zoning out.<br><strong>Emotional:</strong> numbness, emptiness, hopelessness, "I don't care" (means "I can't cope").<br><strong>Behavioural:</strong> withdrawal, dropping out of activities and friendships, losing interest in things they loved, passivity.</p><h3>What actually helps</h3><p>Coming out of shutdown requires warmth without demands. Presence without expectation. Sit near them. Don't ask "what's wrong?" Just be a warm, quiet, safe body nearby. "I'm here. You don't have to say anything. I'm not going anywhere." Gentle rhythm — a slow walk, soft music. Warm drinks. Time.</p><p><em>The most healing words: "I love you even when everything feels like this."</em></p>`},
+  {id:6,category:'tools',number:'Blog Post 06',title:"The 4-8 Breathing Technique — Your Most Powerful Regulation Tool",desc:"Why this simple breathing pattern works, the science behind it, and how to use it with your child.",content:`<h2>The 4-8 Breathing Technique — Your Most Powerful Regulation Tool</h2><p>If I could give every parent one tool, it would be this. Simple, free, available anywhere, works immediately, and has decades of science behind it.</p><h3>How to do it</h3><p><strong>Breathe in through your nose for 4 counts.</strong> Let your belly rise.<br><strong>Breathe out through your mouth for 8 counts.</strong> Long, slow, controlled. A soft "haaa" sound. The exhale is a release, not a push.<br>Repeat 3-5 times.</p><h3>Why it works</h3><p>The extended exhale directly stimulates the <strong>vagus nerve</strong> — the main nerve of the parasympathetic system, your body's natural brake. It sends a signal directly to the brain: <em>we are safe. We can slow down.</em> Heart rate drops. Cortisol decreases. The thinking brain comes back online.</p><p>This is why sighing feels good. Your body already knows this technique. We're just making it deliberate.</p><h3>Using it with your child</h3><p>Practise it when they don't need it. The goal is a reflex — so it's available when they're activated. Make it a game. Make it part of your morning or bedtime routine. Do it with them, not to them. With younger children, blow bubbles together — blowing naturally creates the slow extended exhale.</p><p><strong>For you:</strong> Three rounds of 4-8 breathing before you walk into a difficult situation is worth more than any script. Breathe first. Then go in.</p>`},
+  {id:7,category:'tools',number:'Blog Post 07',title:"EFT Tapping for Children — A Beginner's Guide",desc:"What tapping is, why it works for children, and how to introduce it in a way they'll actually engage with.",content:`<h2>EFT Tapping for Children — A Beginner's Guide</h2><p>EFT is one of my favourite tools for children — not just because it works, but because children take to it naturally. They haven't yet built the adult scepticism. They just try it, feel the shift, and want to do it again.</p><h3>What EFT actually is</h3><p>EFT combines tapping on specific acupressure points with honest acknowledgement of what you're feeling. You don't push the feeling away. You tap <em>while the feeling is present</em> and let the body process it. Research consistently shows tapping sends a calming signal directly to the amygdala — reducing cortisol and emotional charge, often in minutes.</p><h3>The tapping points</h3><p><strong>Karate chop</strong> (side of hand) → <strong>Top of head</strong> → <strong>Inner eyebrow</strong> → <strong>Side of eye</strong> → <strong>Under eye</strong> → <strong>Under nose</strong> → <strong>Chin</strong> → <strong>Collarbone</strong> → <strong>Under arm</strong></p><h3>The basic structure</h3><p>Setup on karate chop (x3): <em>"Even though I feel [the feeling], I am still safe and I am loved."</em><br>Tap through remaining points saying something honest: <em>"This big angry feeling... it feels huge... it's in my chest..."</em><br>End with: <em>"I am safe. This feeling is passing. I am loved."</em></p><h3>Introducing it to children</h3><p>Call it something fun — "magic tapping," "brave buttons," "worry buttons." Let them rate the feeling out of 10. Tap together. Rate again. The shift is usually quick and children find it fascinating. Make it normal and everyday — tap about small things, so it's available when the big things arrive.</p>`},
+  {id:8,category:'parenting',number:'Blog Post 08',title:"Co-Regulation — Why You Are the Most Powerful Tool Your Child Has",desc:"The science of co-regulation, why children cannot self-regulate, and what this means for you as a parent.",content:`<h2>Co-Regulation — Why You Are the Most Powerful Tool Your Child Has</h2><p><strong>You are the regulation.</strong> Not the strategies or scripts. You. Your nervous system, heartbeat, breathing, face, voice, presence — these are what your child's nervous system is tuning into every moment.</p><h3>Why children cannot self-regulate</h3><p>The prefrontal cortex doesn't mature until age 25. Children are biologically incapable of regulating alone. Through a process involving mirror neurons and limbic resonance, your child's nervous system actually synchronises with yours. When you are calm, they have the biological raw material to become calmer. When you are activated — even if you're hiding it — they feel that too.</p><h3>What co-regulation looks like</h3><p>Your child is melting down. Before anything else: three slow breaths — 4 in, 8 out. Feel your feet on the floor. Soften your jaw. Lower your shoulders. Then go to your child. Get lower. Soften your face. Slow your voice. You are not managing them — you are regulating <em>with</em> them.</p><h3>The hardest part</h3><p>Co-regulation is only possible when you yourself are regulated. This is why your own practice — breathing, tapping, sleep, recovery time — is not selfish. It is the foundation of everything. You cannot pour from an empty cup.</p><h3>Repair is part of co-regulation</h3><p>You will not always get it right. When you come back and say "I'm sorry I raised my voice. I love you" — you are teaching your child that relationships survive difficulty and that safety returns. You don't need to be perfect. You need to be consistent, warm, and willing to repair.</p>`},
+  {id:9,category:'parenting',number:'Blog Post 09',title:"What to Say to a Dysregulated Child — and What Never to Say",desc:"The words that help, the words that accidentally make things worse, and why less is almost always more.",content:`<h2>What to Say to a Dysregulated Child — and What Never to Say</h2><p>When a child is dysregulated, the language-processing, reasoning parts of their brain are largely offline. Complex sentences, explanations, and logical arguments cannot be processed normally. <strong>Less is almost always more.</strong></p><h3>What to say — Lion Cub (activated)</h3><p>"<strong>I'm here.</strong>" These two words do more than a paragraph of explanation.<br>"<strong>You're safe.</strong>" You are speaking to their nervous system, not their thinking mind.<br>"<strong>I've got you.</strong>" Addresses the fear of being alone in the big feelings.<br>"<strong>I can see this feels really big.</strong>" Validation without trying to fix.</p><h3>What never to say — Lion Cub</h3><p><strong>"Calm down."</strong> If they could, they would.<br><strong>"You're fine."</strong> They don't feel fine.<br><strong>"Why are you doing this?"</strong> Wrong question, wrong time — they often genuinely don't know.<br><strong>"I'll give you something to cry about."</strong> Never. This is a threat to a nervous system already in survival mode.</p><h3>What to say — Hedgehog (shutdown)</h3><p>"<strong>I'm here. You don't have to say anything.</strong>"<br>"<strong>I'm not going anywhere.</strong>"<br>"<strong>I love you even when everything feels like this.</strong>"<br>And sometimes — just sitting near them in silence. Your warm, patient presence.</p><h3>After regulation returns</h3><p>Once the nervous system is back online: warmth first, then brief gentle reflection. Not "your behaviour was unacceptable." But: "That was a really hard morning. Are you okay? I love you." Connection before correction. Always.</p>`},
+  {id:10,category:'parenting',number:'Blog Post 10',title:"Co-Regulation in Action — How to Actually Help Your Child Come Back to Calm",desc:"Practical, step-by-step guidance on what to do in the moment when your child is activated or shutdown.",content:`<h2>Co-Regulation in Action — How to Actually Help Your Child Come Back to Calm</h2><h3>Before anything else — regulate yourself</h3><p>Before you approach your child, before you say a single word, pause. Three breaths — 4 counts in, 8 counts out. Feel your feet on the floor. Drop your shoulders. Unclench your jaw. A dysregulated adult cannot co-regulate a dysregulated child.</p><h3>For the Lion Cub</h3><p><strong>Get lower.</strong> Physically lower than your child. Height signals dominance. Low signals safety.<br><strong>Soften everything.</strong> Face, voice, posture.<br><strong>Less words, more presence.</strong> "I'm here. You're safe." No explanations, no consequences.<br><strong>Breathe audibly.</strong> Your slow exhale is a co-regulation cue their nervous system can follow.<br><strong>Wait.</strong> The nervous system takes time to downregulate. Your willingness to stay is itself a regulation signal.</p><h3>For the Hedgehog</h3><p><strong>Presence without pressure.</strong> Sit nearby with a book or cup of tea. No agenda.<br><strong>Gentle rhythm.</strong> Soft music with a steady beat. Rhythm tells the body this moment is not permanent.<br><strong>Warmth without expectation.</strong> A warm drink brought without comment. A blanket.</p><h3>After — the repair</h3><p>Once they've returned toward their Owl, a short moment of warm connection is worth more than any debrief. "That was hard. Are you okay? I love you." Then let it go. Show up consistently. Repair when you don't. That is the whole job.</p>`},
+  {id:11,category:'parenting',number:'Blog Post 11',title:"Anxiety in Children — What It Really Is and What's Actually Happening in Their Body",desc:"Understanding childhood anxiety through a nervous system lens — symptoms, behaviours, and what's driving it all.",content:`<h2>Anxiety in Children — What It Really Is and What's Actually Happening in Their Body</h2><p>Childhood anxiety is not just "a thinking problem" or "a worrying problem." At its root, it is a <strong>nervous system problem</strong> — a body problem. Understanding it that way completely changes how we respond.</p><h3>What anxiety actually is</h3><p>Anxiety is what happens when the nervous system's threat-detection system is running too hot. The amygdala fires at things that don't require a survival response. The body floods with stress hormones as if there is real danger — even when the "threat" is a maths test or a social situation.</p><p>To the child, it feels completely real. The racing heart, the stomach ache, the tight chest — these are genuine physiological responses. Telling an anxious child "there's nothing to worry about" is like telling someone with a broken leg there's nothing to limp about.</p><h3>Physical symptoms of anxiety</h3><p>Stomach aches (especially before school), headaches, racing heart, fast shallow breathing, nausea, needing the toilet urgently, muscle tension, feeling very hot or sweaty, shaking, dizziness.</p><h3>Emotional and behavioural symptoms</h3><p>Constant worry, catastrophising, intense fear of making mistakes, hypervigilance, school refusal, avoidance, clinginess, excessive reassurance-seeking, perfectionism, sleep refusal, irritability and defiance.</p><h3>What actually helps</h3><p>The 4-8 breathing directly counteracts the physiological anxiety response. EFT tapping reduces the amygdala's reactivity to specific triggers over time. Co-regulation — your calm presence — is the most powerful anxiety intervention that exists for children. Anxiety responds to felt safety, not logic.</p>`},
+  {id:12,category:'states',number:'Blog Post 12',title:"Shutdown and Depression in Children — Understanding the Difference and What to Do",desc:"What shutdown looks like versus depression, how they overlap, and how to support a child who has gone flat and withdrawn.",content:`<h2>Shutdown and Depression in Children — Understanding the Difference and What to Do</h2><p>If your child has gone really quiet, you'll know the particular fear that comes with it. Not the loud fear of a meltdown — the cold, hollow fear of watching your child disappear. Trying to connect and feeling nothing come back.</p><h3>What shutdown is</h3><p>Shutdown is a nervous system survival response. The dorsal vagal branch activates when the threat is too overwhelming to fight or flee from. The body goes still. Energy is conserved. Connection is cut off. It is often a response to sustained overwhelm — a child who has been in Lion Cub for a long time without adequate support may eventually collapse into Hedgehog.</p><h3>What depression is</h3><p>The nervous system picture in depression also involves dorsal vagal shutdown. What tends to distinguish depression from situational shutdown is <strong>duration, persistence, and pervasiveness</strong>. Shutdown often lifts with consistent co-regulation and time. Depression persists across contexts, over weeks and months.</p><p><strong>If your child has been flat and withdrawn for more than two weeks, is talking about hopelessness or worthlessness, or showing any signs of self-harm — please reach out to your GP or a qualified mental health professional.</strong></p><h3>What helps both</h3><p><strong>Presence without pressure.</strong> "I'm here. You don't have to say anything."<br><strong>Gentle physical warmth</strong> — warm drinks, baths, blankets.<br><strong>Rhythm and movement</strong> — slow walking, rocking, music with a steady beat.<br><strong>Very gentle 4-8 breathing</strong>, offered softly with no pressure.<br><strong>No pressure to talk.</strong> "I'm here whenever you're ready." And then actually being there.</p><p><strong>A note for you:</strong> Having a child in shutdown is one of the most frightening experiences of parenting. Please make sure you have your own support. You have not lost your child. Keep showing up. It matters more than you know.</p>`}
+];
+
+function renderLessons(filter) {
+  const grid = document.getElementById('lesson-grid');
+  const filtered = lessons.filter(l => filter==='all'||l.category===filter);
+  grid.innerHTML = filtered.map(l => `
+    <div class="lesson-card" onclick="openLesson(${l.id})">
+      <div class="lesson-header"><div class="lesson-number">${l.number}</div><div class="lesson-title">${l.title}</div></div>
+      <div class="lesson-body"><div class="lesson-desc">${l.desc}</div><button class="lesson-read-btn">Read post →</button></div>
+    </div>`).join('');
+}
+
+function filterLessons(filter, btn) {
+  document.querySelectorAll('#section-blog .inner-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  renderLessons(filter);
+}
+
+function openLesson(id) {
+  const l = lessons.find(x=>x.id===id);
+  if (!l) return;
+  document.getElementById('lesson-modal-content').innerHTML = l.content;
+  document.getElementById('lesson-modal').classList.remove('hidden');
+}
+
+function hideLessonModal() { document.getElementById('lesson-modal').classList.add('hidden'); }
+
+document.getElementById('lesson-modal').addEventListener('click', function(e) { if(e.target===this) hideLessonModal(); });
+document.getElementById('upload-modal').addEventListener('click', function(e) { if(e.target===this) hideUploadModal(); });
+</script>
+</body>
+</html>
